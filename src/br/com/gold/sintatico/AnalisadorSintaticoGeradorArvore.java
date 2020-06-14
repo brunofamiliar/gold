@@ -2,8 +2,8 @@ package br.com.gold.sintatico;
 
 import java.util.ArrayList;
 
-import br.com.l7p.lexico.TabelaSimbolos;
-import br.com.l7p.lexico.Token;
+import br.com.gold.lexion.SymbolTable;
+import br.com.gold.lexion.Token;
 
 public class AnalisadorSintaticoGeradorArvore {
 
@@ -20,8 +20,8 @@ public class AnalisadorSintaticoGeradorArvore {
 	}
 
 	public void leToken() {
-		if (token != null && token.getClasse().equals("ID")) {
-			TabelaSimbolos.addSimbolo(token, escopo);
+		if (token != null && token.getClassToken().equals("ID")) {
+			SymbolTable.addSymbol(token, escopo);
 		}
 		
 		if(pToken < tokens.size()) {
@@ -39,7 +39,7 @@ public class AnalisadorSintaticoGeradorArvore {
 		pToken = 0;
 		leToken();
 		raiz = ListDef();
-		if (!token.getClasse().equals("$")) {
+		if (!token.getClassToken().equals("$")) {
 			erros.add("Erro: esperado um final de cadeia.");
 		}
 	}
@@ -51,69 +51,68 @@ public class AnalisadorSintaticoGeradorArvore {
 	//<ListDef> ::= <Def><ListDef> | 
 	private No ListDef() {
 		No no = new No(TipoNo.NO_LISTDEF);
-		//if (!token.getImagem().equals(" ")) {
-		if(token.getImagem().equals("def")) {	
+		if(token.getImage().equals("fx")) {	
 			no.addFilho(Def());
 			no.addFilho(ListDef());
 		}
 		return no;
 	}
 
-	//<Def> ::= â€˜defâ€™  id â€˜(â€˜ <ListParam> â€˜)â€™  â€˜:â€™  <Tipo> â€˜{â€˜ <ListComan> â€˜}â€™
+	//<Def> ::= ‘fx’  id ‘:‘ <ListParam> ‘=>’  <ListComan> ‘end’ ‘(‘ <Tipo> ‘)’
 	private No Def() {
 		No no = new No(TipoNo.NO_DEF);
-		if (token.getImagem().equals("def")) {
-			no.addFilho(new No(token));
+		if (token.getImage().equals("fx")) {
+			no.addFilho(new No(token));	
 			leToken();
-			if(token.getClasse().equals("ID")) {
-				escopo = token.getImagem();
+			if(token.getClassToken().equals("ID")) {
+				escopo = token.getImage();
 				no.addFilho(new No(token));
 				leToken();
-				if (token.getImagem().equals("(")) {
+				if (token.getImage().equals(":")) {
 					no.addFilho(new No(token));
 					leToken();
 					no.addFilho(ListParam());
-					if(token.getImagem().equals(")")) {
+					if(token.getImage().equals("=>")) {
 						no.addFilho(new No(token));
 						leToken();
-						if(token.getImagem().equals(":")) {
+						no.addFilho(ListComan());
+						if(token.getImage().equals("end")) {
 							no.addFilho(new No(token));
 							leToken();
-							no.addFilho(Tipo());
-							if(token.getImagem().equals("{")) {
+							if(token.getImage().equals("(")) {
 								no.addFilho(new No(token));
 								leToken();
-								no.addFilho(ListComan());
-								if(token.getImagem().equals("}")) {
+								no.addFilho(Tipo());
+								if(token.getImage().equals(")")) {
 									no.addFilho(new No(token));
 									leToken();
 								}else {
 									Token lastToken = lastToken();
-									erros.add("Erro: esperado um '}'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+									erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 								}
 							}else {
 								Token lastToken = lastToken();
-								erros.add("Erro: esperado um '{'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-							}
+								erros.add("Erro: esperado um '('. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+							}	
 						}else {
 							Token lastToken = lastToken();
-							erros.add("Erro: esperado um ':'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+							erros.add("Erro: esperado um 'end'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 						}
 					}else {
 						Token lastToken = lastToken();
-						erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+						erros.add("Erro: esperado um '=>'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 					}
 				}else {
 					Token lastToken = lastToken();
-					erros.add("Erro: esperado um '('. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+					erros.add("Erro: esperado um ':'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 				}
 			}else {
 				Token lastToken = lastToken();
-				erros.add("Erro: esperado um 'identificador'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+				erros.add("Erro: esperado um 'identificador'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 			}
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um 'def'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um 'fx'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 		return no;
 	}
@@ -121,113 +120,196 @@ public class AnalisadorSintaticoGeradorArvore {
 	//<ListComan> ::=  | <Coman><ListComan>
 	private No ListComan() {
 		No no = new No(TipoNo.NO_LISTCOMAN);
-		if(token.getClasse().equals("ID")
-				|| token.getImagem().equals("se")
-				//Arrumei aqui estava equanto ou invÃ©s de enquanto
-				|| token.getImagem().equals("enquanto")
-				|| token.getImagem().equals("retorna")
-				|| token.getImagem().equals("leia")
-				|| token.getImagem().equals("escreva")
-				|| token.getImagem().equals("{")) {
+		if(token.getClassToken().equals("ID")
+				|| token.getImage().equals("if")
+				|| token.getImage().equals("when")
+				|| token.getImage().equals("back")
+				|| token.getImage().equals("observe")
+				|| token.getImage().equals("read")
+				|| token.getImage().equals("show")
+				|| token.getImage().equals("=>")) {
 			no.addFilho(Coman());
 			no.addFilho(ListComan());
-			//leToken();
 		}
 		return no;
 	}
 
-	//<Coman> ::= <Decl>
-	//| <Atrib>
-	//| <Se>
-	//| <Laco>
-	//| <Ret>
-	//| <Entrada>
-	//| <Saida>
-	//| <Chamada> â€˜;â€™
-	//| â€˜{â€™ <ListComan> â€˜}â€™
+	/*
+	 * <Coman> ::= <Decl> | <Atrib> | <Se> | <Laco> | <Obser> | <Ret> | <Entrada> |
+	 * <Saida> | <Chamada> | ‘=>’ <ListComan> ‘end'
+	 */
 
 	private No Coman() {
 		No no = new No(TipoNo.NO_COMAN);
-		if(token.getClasse().equals("ID")) {
+		if(token.getClassToken().equals("ID")) {
 			Token lookHead = lookHead();
-			if (lookHead.getImagem().equals("=")) {
+			if (lookHead.getImage().equals("=")) {
 				no.addFilho(Atrib());
-			}else if(lookHead.getImagem().equals("(")) {
+			}else if(lookHead.getImage().equals("=>")) {
 				no.addFilho(Chamada());
-				if(token.getImagem().equals(";")) {
-					no.addFilho(new No(token));
-				}else {
-					Token lastToken = lastToken();
-					erros.add("Erro: esperado um ';'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-				}
 			}else {
 				no.addFilho(Decl());
 			}
-		}else if(token.getImagem().equals("se"))
+		}else if(token.getImage().equals("if"))
 			no.addFilho(Se());
-		else if(token.getImagem().equals("enquanto"))
+		else if(token.getImage().equals("when"))
 			no.addFilho(Laco());
-		else if(token.getImagem().equals("retorna"))
+		else if(token.getImage().equals("observe"))
+			no.addFilho(Observe());
+		else if(token.getImage().equals("back"))
 			no.addFilho(Ret());
-		else if(token.getImagem().equals("leia"))
+		else if(token.getImage().equals("read"))
 			no.addFilho(Entrada());
-		else if(token.getImagem().equals("escreva"))
+		else if(token.getImage().equals("show"))
 			no.addFilho(Saida());
-		else if(token.getImagem().equals("{")) {
+		else if(token.getImage().equals("=>")) {
 			no.addFilho(new No(token));
 			leToken();
 			no.addFilho(ListComan());
-			if(token.getImagem().equals("}")) {
+			if(token.getImage().equals("end")) {
 				no.addFilho(new No(token));
 				leToken();
 			}else {
 				Token lastToken = lastToken();
-				erros.add("Erro: esperado um '}'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+				erros.add("Erro: esperado um 'end'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 			}
 		}
 		else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um 'id' | 'retorna' | 'se' | 'equanto' | 'leia' | 'escreva' | '=' | '('. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um 'id' | 'back' | 'if' | 'when' | 'read' | 'show' | '=' | '=>'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 
 		return no;
 	}
-
-	//<Saida> ::= â€˜escrevaâ€™ â€˜(â€˜ <Operando> â€˜)â€™ â€˜;â€™ 
-	private No Saida() {
-		No no = new No(TipoNo.NO_SAIDA);
-		if(token.getImagem().equals("escreva")) {
+	
+	
+	//<Obser> ::= ‘observer’ id ‘=>’ <Caso> ‘end’
+	private No Observe() {
+		No no = new No(TipoNo.NO_OBSERVE);
+		if(token.getImage().equals("observe")) {
 			no.addFilho(new No(token));
 			leToken();
-			if(token.getImagem().equals("(")) {
+			if(token.getClassToken().equals("ID")) {
 				no.addFilho(new No(token));
 				leToken();
-				no.addFilho(Operando());
-				if(token.getImagem().equals(")")) {
+				if(token.getImage().equals("=>")) {
 					no.addFilho(new No(token));
 					leToken();
-					if(token.getImagem().equals(";")) {
+					no.addFilho(Caso());
+					if(token.getImage().equals("end")) {
 						no.addFilho(new No(token));
 						leToken();
 					}else {
 						Token lastToken = lastToken();
-						erros.add("Erro: esperado um ';'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+						erros.add("Erro: esperado um 'end'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 					}
 				}else {
 					Token lastToken = lastToken();
-					erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+					erros.add("Erro: esperado um '=>'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 				}
 			}else {
 				Token lastToken = lastToken();
-				erros.add("Erro: esperado um '('. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+				erros.add("Erro: esperado um 'identificador'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 			}
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um 'escreva'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um 'observe'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
+		
+		return no;
+	}
+	
+	//<Caso> ::= ‘equals’ <Operando> <ListComan> ´stop´<Base>
+	private No Caso() {
+		No no = new No(TipoNo.NO_CASO);
+		
+		if(token.getImage().equals("equals")) {
+			no.addFilho(new No(token));
+			leToken();
+			no.addFilho(Operando());
+			no.addFilho(ListComan());
+			if(token.getImage().equals("stop")) {
+				no.addFilho(new No(token));
+				leToken();
+				no.addFilho(Base());
+			}else {
+				Token lastToken = lastToken();
+				erros.add("Erro: esperado um 'stop'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+			}
+		}else {
+			Token lastToken = lastToken();
+			erros.add("Erro: esperado um 'equals'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+		}
+		
+		return no;
+	}
+	
+	//<Base> ::= ‘base’ <Operando>
+	private No Base() {
+		No no = new No(TipoNo.NO_BASE);
+		
+		if(token.getImage().equals("base")) {
+			no.addFilho(new No(token));
+			leToken();
+			no.addFilho(Operando());
+		}else {
+			Token lastToken = lastToken();
+			erros.add("Erro: esperado um 'base'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+		}
+		
 		return no;
 	}
 
+	//<Saida> ::= ‘show’ ‘(‘ <Saida2> ‘)’ 
+	private No Saida() {
+		No no = new No(TipoNo.NO_SAIDA);
+		if(token.getImage().equals("show")) {
+			no.addFilho(new No(token));
+			leToken();
+			if(token.getImage().equals("(")) {
+				no.addFilho(new No(token));
+				leToken();
+				no.addFilho(Saida2());
+				if(token.getImage().equals(")")) {
+					no.addFilho(new No(token));
+					leToken();
+				}else {
+					Token lastToken = lastToken();
+					erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+				}
+			}else {
+				Token lastToken = lastToken();
+				erros.add("Erro: esperado um '('. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+			}
+		}else {
+			Token lastToken = lastToken();
+			erros.add("Erro: esperado um 'show'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+		}
+		return no;
+	}
+	
+	//<Saida2> ::= “ clt “, <Operando> | <Operando> 
+	private No Saida2() {
+		No no = new No(TipoNo.NO_SAIDA2);
+
+		if(token.getClassToken().contentEquals("TCL")) {
+			no.addFilho(new No(token));
+			leToken();
+			if(token.getImage().equals(",")) {
+				no.addFilho(new No(token));
+				leToken();
+				no.addFilho(Operando());
+			}else {
+				Token lastToken = lastToken();
+				erros.add("Erro: esperado um ','. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+			}
+		}else {
+			no.addFilho(Operando());
+		}
+		
+		return no;
+		
+	}
 	/* 
 	 * <Operando> ::= id 
 			| cli
@@ -238,105 +320,89 @@ public class AnalisadorSintaticoGeradorArvore {
 
 	private No Operando() {
 		No no = new No(TipoNo.NO_OPERANDO);
-		if(token.getClasse().equals("ID")
-				|| token.getClasse().equals("CLI")
-				|| token.getClasse().equals("CLR")
-				|| token.getClasse().equals("CLT")) {
+		if(token.getClassToken().equals("ID")
+				|| token.getClassToken().equals("ILC")
+				|| token.getClassToken().equals("RCL")
+				|| token.getClassToken().equals("TCL")) {
 			no.addFilho(new No(token));
 			leToken();
 		}
 		return no;
 	}
 
-	//<Entrada> ::= â€˜leiaâ€™ â€˜(â€˜ id â€˜)â€™ â€˜;â€™ 
+	//<Entrada> ::= ‘read’ ‘(‘ id ‘)’
 	private No Entrada() {
 		No no = new No(TipoNo.NO_ENTRADA);
-		if(token.getImagem().equals("leia")) {
+		if(token.getImage().equals("read")) {
 			no.addFilho(new No(token));
 			leToken();
-			if(token.getImagem().equals("(")) {
+			if(token.getImage().equals("(")) {
 				no.addFilho(new No(token));
 				leToken();
 				//Estava ID modifiquei para CLT
-				if(token.getClasse().equals("CLT")) {
+				if(token.getClassToken().equals("ID")) {
 					no.addFilho(new No(token));
 					leToken();
-					if(token.getImagem().equals(")")) {
+					if(token.getImage().equals(")")) {
 						no.addFilho(new No(token));
 						leToken();
-						if(token.getImagem().equals(";")) {
-							no.addFilho(new No(token));
-							leToken();
-						}else {
-							Token lastToken = lastToken();
-							erros.add("Erro: esperado um ';'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-						}
 					}else {
 						Token lastToken = lastToken();
-						erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+						erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 					}
 				}else {
 					Token lastToken = lastToken();
-					erros.add("Erro: esperado um 'identificador'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+					erros.add("Erro: esperado um 'identificador'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 				}
 			}else {
 				Token lastToken = lastToken();
-				erros.add("Erro: esperado um '('. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+				erros.add("Erro: esperado um '('. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 			}
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um 'leia'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um 'leia'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 
 		return no;
 	}
 
-	//<Ret> ::= â€˜retornaâ€™ <Fator> â€˜;â€™
+	//<Ret> ::= <Ret> ::= ‘back’ <Fator>
 	private No Ret() {
 		No no = new No(TipoNo.NO_RET);
-		if(token.getImagem().equals("retorna")) {
+		if(token.getImage().equals("back")) {
 			no.addFilho(new No(token));
 			leToken();
 			no.addFilho(Fator());
-			if(token.getImagem().equals(";")) {
-				no.addFilho(new No(token));
-				leToken();
-			}
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um 'retorna'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um 'back'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 		return no;
 	}
 
-	//<Fator> ::= <Operando> | <Chamada> | â€˜(â€˜ <ExpArit> â€˜)â€™
+	//<Fator> ::= <Operando> | <Chamada> | ‘(‘ <ExpArit> ‘)’
 	private No Fator() {
 		No no = new No(TipoNo.NO_FATOR);
-		if(token.getClasse().equals("ID")) {
-			Token lookHead = lookHead();
-			if (lookHead.getImagem().equals("(")) {
-				no.addFilho(Chamada());
-			}else {
-				no.addFilho(Operando());
-			}
-		}else if(token.getClasse().equals("CLI") ||
-				token.getClasse().equals("CLT") ||
-				token.getClasse().equals("CLR")) {
+		if(token.getClassToken().equals("ID")) {
 			no.addFilho(Operando());
-		}else if(token.getImagem().equals("(")) {
+		}else if(token.getClassToken().equals("ILC") ||
+				token.getClassToken().equals("TCL") ||
+				token.getClassToken().equals("RCL")) {
+			no.addFilho(Operando());
+		}else if(token.getImage().equals("=>")) {
 			no.addFilho(new No(token));
 			leToken();
 			no.addFilho(ExpArit());
-			if(token.getImagem().equals(")")) {
+			if(token.getImage().equals("end")) {
 				no.addFilho(new No(token));
 				leToken();
 			}else {
 				Token lastToken = lastToken();
-				erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+				erros.add("Erro: esperado um 'end'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 			}
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um '('. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um '=>'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 		return no;
 	}
@@ -352,7 +418,7 @@ public class AnalisadorSintaticoGeradorArvore {
 	//<ExpArit2> ::=  | <Op1> <ExpArit>
 	private No ExpArit2() {
 		No no = new No(TipoNo.NO_EXPARIT2);
-		if(token.getImagem().equals("+") || token.getImagem().equals("-")) {
+		if(token.getImage().equals("+") || token.getImage().equals("-")) {
 			no.addFilho(Op1());
 			no.addFilho(ExpArit());
 		}
@@ -361,17 +427,17 @@ public class AnalisadorSintaticoGeradorArvore {
 	}
 
 	/* 
-	 * <Op1> ::= â€˜+â€™
-		| â€˜-â€˜
+	 * <Op1> ::= ‘+’
+            	| ‘-‘
 	 */
 	private No Op1() {
 		No no = new No(TipoNo.NO_OP1);
-		if(token.getImagem().equals("+") || token.getImagem().equals("-"))  {
+		if(token.getImage().equals("+") || token.getImage().equals("-"))  {
 			no.addFilho(new No(token));
 			leToken();
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um '+' ou '-'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um '+' ou '-'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 		return no;
 	}
@@ -387,8 +453,8 @@ public class AnalisadorSintaticoGeradorArvore {
 	//<Termo2> ::= | <Op2> <Termo>
 	private No Termo2() {
 		No no = new No(TipoNo.NO_TERMO2);
-
-		if(token.getImagem().equals("*") || token.getImagem().equals("/")) {
+		
+		if(token.getImage().equals("*") || token.getImage().equals("/")) {
 			no.addFilho(Op2());
 			no.addFilho(Termo());
 		}
@@ -396,45 +462,31 @@ public class AnalisadorSintaticoGeradorArvore {
 		return no;
 	}
 
-	//<Op2> ::= â€˜* | â€˜/â€˜
+	//<Op2> ::= ‘*’
+	// | ‘/‘
 	private No Op2() {
 		No no = new No(TipoNo.NO_OP2);
-		if(token.getImagem().equals("*") || token.getImagem().equals("/"))  {
+		if(token.getImage().equals("*") || token.getImage().equals("/"))  {
 			no.addFilho(new No(token));
 			leToken();
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um '*' ou '/'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um '*' ou '/'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 		return no;
 	}
 
-	//<Laco> ::= â€˜enquantoâ€™  â€˜(â€˜  <ExpRel> â€™)â€™ <Coman>
+	//<Laco> ::= ‘when’ <ExpRel> <Coman>
 	private No Laco() {
 		No no = new No(TipoNo.NO_LACO);
-		//Arrumei aqui estava escrito equanto ou invÃ©s de enquanto
-		if(token.getImagem().equals("enquanto")) {
+		if(token.getImage().equals("when")) {
 			no.addFilho(new No(token));
 			leToken();
-			if(token.getImagem().equals("(")) {
-				no.addFilho(new No(token));
-				leToken();
-				no.addFilho(ExpRel());
-				if(token.getImagem().equals(")")) {
-					no.addFilho(new No(token));
-					leToken();
-					no.addFilho(Coman());
-				}else {
-					Token lastToken = lastToken();
-					erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-				}
-			}else {
-				Token lastToken = lastToken();
-				erros.add("Erro: esperado um '(. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-			}
+			no.addFilho(ExpRel());
+			no.addFilho(Coman());
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um 'enquanto'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um 'when'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 		return no;
 	}
@@ -450,88 +502,65 @@ public class AnalisadorSintaticoGeradorArvore {
 	}
 
 	/*
-	 * <Op3> ::= â€˜>â€™
-		| â€˜>=â€˜
-		| â€˜<â€˜
-		| â€˜<=â€˜
-		| â€˜==â€˜
-		| â€˜!=â€˜
+	 * <Op3> ::= ‘>’
+            	| ‘>=‘
+            	| ‘<‘
+            	| ‘<=‘
+            	| ‘==‘
+            	| ‘!=‘
 	 */
 	private No Op3() {
 		No no = new No(TipoNo.NO_OP3);
-		if(token.getImagem().equals(">") ||
-				token.getImagem().equals(">=") ||
-				token.getImagem().equals("<") ||
-				token.getImagem().equals("<=") ||
-				token.getImagem().equals("==") ||
-				token.getImagem().contentEquals("!=")) {
+		if(token.getImage().equals(">") ||
+				token.getImage().equals(">=") ||
+				token.getImage().equals("<") ||
+				token.getImage().equals("<=") ||
+				token.getImage().equals("==") ||
+				token.getImage().contentEquals("!=")) {
 			no.addFilho(new No(token));
 			leToken();
 		}
 		return no;
 	}
 
-	//<Se> ::= â€˜seâ€™ â€˜(â€˜ <ExpRel> â€˜)â€™ <Coman> <Senao>
+	//<Se> ::= ‘if’ <ExpRel> <Coman> <Senao>
 	private No Se() {
 		No no = new No(TipoNo.NO_SE);
-		if(token.getImagem().equals("se")) {
+		if(token.getImage().equals("if")) {
 			no.addFilho(new No(token));
 			leToken();
-			if(token.getImagem().equals("(")) {
-				no.addFilho(new No(token));
-				leToken();
-				no.addFilho(ExpRel());
-				if(token.getImagem().equals(")")) {
-					no.addFilho(new No(token));
-					leToken();
-					no.addFilho(Coman());
-					no.addFilho(Senao());
-				}else {
-					Token lastToken = lastToken();
-					erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-				}
-			}else {
-				Token lastToken = lastToken();
-				erros.add("Erro: esperado um '('. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-			}
+			no.addFilho(ExpRel());
+			no.addFilho(Coman());
+			no.addFilho(Senao());
 		}else {			
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um 'se'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um 'if'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 		return no;
 	}
 
-	//<Senao> ::= â€˜senaoâ€™ <Coman> | 
+	//<Senao> ::= ‘or’ <Se> | 'or' <Coman> | 
 	private No Senao() {
 		No no = new No(TipoNo.NO_SENAO);
-		if(token.getImagem().equals("senao")) {
+		if(token.getImage().equals("or")) {
 			no.addFilho(new No(token));
 			leToken();
-			no.addFilho(Coman());
+			if(token.getImage().equals("if")) {
+				no.addFilho(Se());
+			}else {
+				no.addFilho(Coman());
+			}
 		}
+		
 		return no;
 	}
 	
-	//<Decl> ::= <ListId> â€˜:â€™ <Tipo> â€˜;â€™
+	//<Decl> ::= <Tipo> <ListId>
 	private No Decl() {
 		No no = new No(TipoNo.NO_DECL);
-		no.addFilho(ListId());
-		raiz = no;
-		if(token.getImagem().equals(":")) {
-			no.addFilho(new No(token));
-			leToken();
 			no.addFilho(Tipo());
-			if(token.getImagem().equals(";")) {
-				no.addFilho(new No(token));
-				leToken();
-			}else {
-				Token lastToken = lastToken();
-				erros.add("Erro: esperado um ';'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-			}
-		}else {
-			Token lastToken = lastToken();
-			erros.add("Erro: esperado um ':'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-		}
+			no.addFilho(ListId());
+			raiz = no;
 		return no;
 	}
 
@@ -544,68 +573,120 @@ public class AnalisadorSintaticoGeradorArvore {
 		return no;
 	}
 
-	//<ListId2> ::= â€˜,â€™ id <ListId2> | 
+	//<ListId2> ::= ‘,’ id <ListId2> | 
 	private No ListId2() {
 		No no = new No(TipoNo.NO_LISTID2);
-		if(token.getImagem().equals(",")) {
+		if(token.getImage().equals(",")) {
 			no.addFilho(new No(token));
 			leToken();
-			if(token.getClasse().equals("ID")) {
+			if(token.getClassToken().equals("ID")) {
 				no.addFilho(new No(token));
 				leToken();
 				no.addFilho(ListId2());
 			}else {
 				Token lastToken = lastToken();
-				erros.add("Erro: esperado um 'identificador'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+				erros.add("Erro: esperado um 'identificador'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 			}
 		}
 		return no;
 	}
 
-	//<Chamada> ::= id â€˜(â€˜ <ListArg> â€˜)â€™ â€˜;â€™
+	//<Chamada> ::= id ‘(‘ <Arg> ‘)’ 
 	private No Chamada() {
 		No no = new No(TipoNo.NO_CHAMADA);
 		no.addFilho(new No(token));
 		leToken();
-		if(token.getImagem().equals("(")) {
+		if(token.getImage().equals("(")) {
 			no.addFilho(new No(token));
 			leToken();
-			no.addFilho(ListArg());
-			if(token.getImagem().equals(")")) {
+			no.addFilho(Arg());
+			if(token.getImage().equals(")")) {
 				no.addFilho(new No(token));
 				leToken();
-				if(token.getImagem().equals(";")) {
-					no.addFilho(new No(token));
-					leToken();
-				}else {
-					Token lastToken = lastToken();
-					erros.add("Erro: esperado um ';'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());				
-				}
 			}else {
 				Token lastToken = lastToken();
-				erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+				erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 			}
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um '('. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um '('. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
+		return no;
+	}
+	
+	//<Arg> ::= <ListArg> | <Anon>
+	private No Arg() {
+		No no = new No(TipoNo.NO_ARG);
+		if(token.getImage().equals("{")) {
+			no.addFilho(Anon());
+		}else {
+			no.addFilho(ListArg());
+		}
+		
+		return no;
+	}
+	
+	// <Anon> ::= ‘{‘ <ListParam> ‘=>’  <ListComan> ‘end’ ‘(‘ <Tipo> ‘)’ ‘}’
+	private No Anon() {
+		No no = new No(TipoNo.NO_ANON);
+		no.addFilho(new No(token));
+		no.addFilho(ListParam());
+		
+		if(token.getImage().equals("=>")) {
+			no.addFilho(new No(token));
+			leToken();
+			no.addFilho(ListComan());
+			if(token.getImage().equals("end")) {
+				no.addFilho(new No(token));
+				leToken();
+				if(token.getImage().equals("(")) {
+					no.addFilho(new No(token));
+					leToken();
+					no.addFilho(Tipo());
+					if(token.getImage().equals(")")) {
+						no.addFilho(new No(token));
+						leToken();
+						if(token.getImage().equals("}")) {
+							no.addFilho(new No(token));
+							leToken();
+						}else {
+							Token lastToken = lastToken();
+							erros.add("Erro: esperado um '}'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+						}
+					}else {
+						Token lastToken = lastToken();
+						erros.add("Erro: esperado um ')'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+					}
+				}else {
+					Token lastToken = lastToken();
+					erros.add("Erro: esperado um '('. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+				}
+			}else {
+				Token lastToken = lastToken();
+				erros.add("Erro: esperado um 'end'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+			}
+		}else {
+			Token lastToken = lastToken();
+			erros.add("Erro: esperado um '=>'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+		}
+		
 		return no;
 	}
 
 	//<ListArg> ::=  | <Operando> <ListArg2>
 	private No ListArg() {
 		No no = new No(TipoNo.NO_LISTARG);
-		if (token.getClasse().equals("ID")) {
+		if (token.getClassToken().equals("ID")) {
 			no.addFilho(Operando());
 			no.addFilho(ListArg2());
 		}
 		return no;
 	}
 
-	//<ListArg2> ::=  | â€˜,â€™ <Operando><ListArg2> 
+	//<ListArg2> ::=  | ‘,’ <Operando><ListArg2>  
 	private No ListArg2() {
 		No no = new No(TipoNo.NO_LISTARG2);
-		if(token.getImagem().equals(",")) {
+		if(token.getImage().equals(",")) {
 			no.addFilho(new No(token));
 			leToken();
 			no.addFilho(Operando());
@@ -615,54 +696,47 @@ public class AnalisadorSintaticoGeradorArvore {
 	}
 
 	
-	//<Atrib> ::= id â€˜=â€˜ <ExpArit> â€˜;â€™
+	//<Atrib> ::= id ‘=‘ <ExpArit>
 	private No Atrib() {
 		No no = new No(TipoNo.NO_ATRIB);
 		no.addFilho(new No(token));
 		leToken();
-		if(token.getImagem().equals("=")) {
+		if(token.getImage().equals("=")) {
 			no.addFilho(new No(token));
 			leToken();
 			no.addFilho(ExpArit());
-			if(token.getImagem().equals(";")) {
-				no.addFilho(new No(token));
-				leToken();
-			}else {
-				Token lastToken = lastToken();
-				erros.add("Erro: esperado um ';'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-			}
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um '='. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um '='. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 		return no;
 	}
 
 	/* 
-	 * <Tipo> ::= â€˜inteiroâ€™
-		| â€˜realâ€™
-		| â€˜textoâ€™
-		| â€˜nadaâ€™
-
+	 *<Tipo> ::= ‘integer’
+            	| ‘real’
+            	| ‘text’
+            	| ‘none’
+            	| 
 	 */
 	private No Tipo() {
 		No no = new No(TipoNo.NO_TIPO);
-		if(token.getClasse().equals("PR")){
-			if(token.getImagem().equals("inteiro") ||
-				token.getImagem().equals("real") ||
-				token.getImagem().equals("texto") ||
-				token.getImagem().equals("nada")) {
+		if(token.getClassToken().equals("RW")){
+			if(token.getImage().equals("integer") ||
+				token.getImage().equals("real") ||
+				token.getImage().equals("text") ||
+				token.getImage().equals("none")) {
 			
 				no.addFilho(new No(token));
 				leToken();
 			}else {
 				Token lastToken = lastToken();
-				erros.add("Erro: esperado uma das seguintes palavras reservadas 'inteiro', 'real', 'texto' ou 'nada. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+				erros.add("Erro: esperado uma das seguintes palavras reservadas 'integer', 'real', 'text' ou 'none'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 			}
 			
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado uma 'palavra reservada'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado uma 'palavra reservada'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 		return no;
 	}
@@ -670,17 +744,19 @@ public class AnalisadorSintaticoGeradorArvore {
 	//<ListParam> ::= <Param><ListParam2> |
 	private No ListParam() {
 		No no = new No(TipoNo.NO_LISTPARAM);
-		if(token.getClasse().equals("ID")) {
+		Token lookHead = lookHead();
+		
+		if(lookHead.getClassToken().equals("ID")) {
 			no.addFilho(Param());
 			no.addFilho(ListParam2());
 		}
 		return no;
 	}
 	
-	//<ListParam2> ::=  â€˜,â€™ <Param><ListParam2> | 
+	//<ListParam2> ::=  ‘,’ <Param><ListParam2> | 
 	private No ListParam2() {
 		No no = new No(TipoNo.NO_LISTPARAM2);
-		if(token.getImagem().equals(",")) {
+		if(token.getImage().equals(",")) {
 			no.addFilho(new No(token));
 			leToken();
 			no.addFilho(Param());
@@ -689,23 +765,17 @@ public class AnalisadorSintaticoGeradorArvore {
 		return no;
 	}
 
-	//<Param> ::= id â€˜:â€™ <Tipo>
+	//<Param> ::= <Tipo> id
 	private No Param() {
 		No no = new No(TipoNo.NO_PARAM);
-		if(token.getClasse().equals("ID")) {
+		no.addFilho(Tipo());
+		
+		if(token.getClassToken().equals("ID")) {
 			no.addFilho(new No(token));
 			leToken();
-			if(token.getImagem().equals(":")) {
-				no.addFilho(new No(token));
-				leToken();
-				no.addFilho(Tipo());
-			}else {
-				Token lastToken = lastToken();
-				erros.add("Erro: esperado um ':'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
-			}
 		}else {
 			Token lastToken = lastToken();
-			erros.add("Erro: esperado um 'identificador'. Linha: " + lastToken.getLinha() + "Coluna: " + lastToken.getColuna());
+			erros.add("Erro: esperado um 'identificador'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 		}
 		return no;
 	}

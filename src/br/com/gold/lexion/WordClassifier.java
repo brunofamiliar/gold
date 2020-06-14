@@ -31,7 +31,7 @@ public class WordClassifier {
 				while (st.hasMoreTokens()) {
 					String image = st.nextToken();
 					
-					if(image.startsWith("/") && aux.substring(variablePrevious + 1, variablePrevious + 2).equals("/")) {
+					if(image.startsWith("#")) {
 						break;
 					}
 					

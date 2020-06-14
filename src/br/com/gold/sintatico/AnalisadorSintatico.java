@@ -18,7 +18,7 @@ public class AnalisadorSintatico {
 	}
 	
 	public void leToken() {
-		if(token != null && token.getClass().equals("ID")){
+		if(token != null && token.getClassToken().equals("ID")){
 			SymbolTable.addSymbol(token, escopo);
 		}
 		token = tokens.get(pToken);
@@ -37,7 +37,7 @@ public class AnalisadorSintatico {
 		pToken = 0;
 		leToken();
 		ListDef();
-		if (!token.getClass().equals("$")) {
+		if (!token.getClassToken().equals("$")) {
 			erros.add("Erro: esperado um final de cadeia.");
 		}
 	}
@@ -78,7 +78,7 @@ public class AnalisadorSintatico {
 	private void Def() {
 		if (token.getImage().equals("fx")) {
 			leToken();
-			if (token.getClass().equals("ID")) {
+			if (token.getClassToken().equals("ID")) {
 				escopo = token.getImage();
 				leToken();
 				if(token.getImage().equals(":")) {
@@ -130,7 +130,7 @@ public class AnalisadorSintatico {
 	 * 
 	 */
 	private void ListComan() {
-		if(token.getClass().equals("ID") || token.getImage().equals("if")
+		if(token.getClassToken().equals("ID") || token.getImage().equals("if")
 				|| token.getImage().equals("when") || token.getImage().equals("read")
 				|| token.getImage().equals("show") || token.getImage().equals("back")
 				|| token.getImage().equals("=>") || token.getImage().equals("observer")
@@ -156,7 +156,7 @@ public class AnalisadorSintatico {
 	
 	private void Coman() {
 		
-		if (token.getClass().equals("ID")) {
+		if (token.getClassToken().equals("ID")) {
 			Token lookHead = lookHead();
 			// Decl | Atrib | Chamada
 			if (lookHead.getImage().equals("=")) {
@@ -197,7 +197,7 @@ public class AnalisadorSintatico {
 	private void Observe() {
 		if(token.getImage().equals("observe")) {
 			leToken();
-			if(token.getClass().equals("ID")) {
+			if(token.getClassToken().equals("ID")) {
 				leToken();
 				if(token.getImage().equals("=>")) {
 					Caso();
@@ -281,7 +281,7 @@ public class AnalisadorSintatico {
 	private void Saida2() {
 		if(token.getImage().equals("\"")) {
 			leToken();
-			if(token.getClass().equals("ID")) {
+			if(token.getClassToken().equals("ID")) {
 				leToken();
 				if(token.getImage().equals("\"")) {
 					leToken();
@@ -297,10 +297,10 @@ public class AnalisadorSintatico {
 				Token lastToken = lastToken();
 				erros.add("Erro: esperado um identificador.e " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 			}
-		}else if(token.getClass().equals("ID") ||
-				token.getClass().equals("CLI") ||
-				token.getClass().equals("CLR") ||
-				token.getClass().equals("CLT")
+		}else if(token.getClassToken().equals("ID") ||
+				token.getClassToken().equals("CLI") ||
+				token.getClassToken().equals("CLR") ||
+				token.getClassToken().equals("CLT")
 				) {
 			Operando();
 		}else {
@@ -316,13 +316,13 @@ public class AnalisadorSintatico {
 			| clt
 	 */
 	private void Operando() {
-		if(token.getClass().equals("ID")) {
+		if(token.getClassToken().equals("ID")) {
 			leToken();
-		}else if(token.getClass().equals("CLI")) {
+		}else if(token.getClassToken().equals("CLI")) {
 			leToken();
-		}else if(token.getClass().equals("CLR")) {
+		}else if(token.getClassToken().equals("CLR")) {
 			leToken();
-		}else if(token.getClass().equals("CLT")) {
+		}else if(token.getClassToken().equals("CLT")) {
 			leToken();
 		}
 		
@@ -334,7 +334,7 @@ public class AnalisadorSintatico {
 			leToken();
 			if(token.getImage().equals("(")) {
 				leToken();
-				if(token.getClass().equals("ID")) {
+				if(token.getClassToken().equals("CLT")) {
 					leToken();
 					if(token.getImage().equals(")")) {
 						leToken();
@@ -344,7 +344,7 @@ public class AnalisadorSintatico {
 					}
 				}else {
 					Token lastToken = lastToken();
-					erros.add("Erro: esperado um 'identificador'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
+					erros.add("Erro: esperado uma 'string'. Linha: " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 				}
 			}else {
 				Token lastToken = lastToken();
@@ -380,12 +380,12 @@ public class AnalisadorSintatico {
 	}
 
 	/*
-	 * <Op3> ::= â€˜>â€™
-		| â€˜>=â€˜
-		| â€˜<â€˜
-		| â€˜<=â€˜
-		| â€˜==â€˜
-		| â€˜!=â€˜
+	 *<Op3> ::= ‘>’
+            	| ‘>=‘
+            	| ‘<‘
+            	| ‘<=‘
+            	| ‘==‘
+            	| ‘!=‘
 	 */
 	
 	private void Op3() {
@@ -416,15 +416,15 @@ public class AnalisadorSintatico {
 
 	//<ExpArit2> ::=  | <Op1> <ExpArit>
 	private void ExpArit2() {
-		if(token.getClass().equals("OPA")) {
+		if(token.getClassToken().equals("OPA")) {
 			Op1();
 			ExpArit();
 		}
 		
 	}
 
-	//<Op1> ::= â€˜+â€™
-	//		  | â€˜-â€˜
+	//<Op1> ::= +
+	//		  | -
 
 	private void Op1() {
 		if(token.getImage().equals("+")) {
@@ -446,7 +446,7 @@ public class AnalisadorSintatico {
 	
 	//<Termo2> ::= | <Op2> <Termo>
 	private void Termo2() {
-		if(token.getClass().equals("OPA")) {
+		if(token.getClassToken().equals("OPA")) {
 			Op2();
 			Termo();
 		}
@@ -466,14 +466,14 @@ public class AnalisadorSintatico {
 
 	//<Fator> ::= <Operando> | <Chamada> | ‘(‘ <ExpArit> ‘)’
 	private void Fator() {
-		if(token.getClass().equals("ID")) {
+		if(token.getClassToken().equals("ID")) {
 			Token lookHead = lookHead();
 			if(lookHead.getImage().equals("(")) {
 				Chamada();
 			}else {
 				Operando();
 			}
-		}else if(token.getClass().equals("CLI") || token.getClass().equals("CLR") || token.getClass().equals("CLT")){
+		}else if(token.getClassToken().equals("CLI") || token.getClassToken().equals("CLR") || token.getClassToken().equals("CLT")){
 			Operando();
 		}else if(token.getImage().equals("(")) {
 			leToken();
@@ -511,7 +511,6 @@ public class AnalisadorSintatico {
 			leToken();
 			Coman();
 		}
-		
 	}
 
 	//<Ret> ::= ‘back’ <Fator>
@@ -537,7 +536,7 @@ public class AnalisadorSintatico {
 	//<ListId> ::= id <ListId2>
 	private void ListId() {
 		leToken();
-		if(token.getClass().equals("ID")) {
+		if(token.getClassToken().equals("ID")) {
 			leToken();
 			ListId2();
 		}else {
@@ -552,7 +551,7 @@ public class AnalisadorSintatico {
 	private void ListId2() {
 		if(token.getImage().equals(",")) {
 			leToken();
-			if (token.getClass().equals("ID")) {
+			if (token.getClassToken().equals("ID")) {
 				leToken();
 				ListId2();
 			}else {
@@ -565,11 +564,11 @@ public class AnalisadorSintatico {
 
 	//<Chamada> ::= id ‘(‘ <Arg> ‘)’ 
 	private void Chamada() {
-		if(token.getClass().equals("ID")) {
+		if(token.getClassToken().equals("ID")) {
 			leToken();
 			if(token.getImage().equals("(")) {
 				leToken();
-				ListArg();
+				Arg();
 				if(token.getImage().equals(")")) {
 				}else {
 					Token lastToken = lastToken();
@@ -641,7 +640,7 @@ public class AnalisadorSintatico {
 
 	//<ListArg> ::=  | <Operando> <ListArg2>
 	private void ListArg() {
-		if(token.getClass().equals("ID")) {
+		if(token.getClassToken().equals("ID")) {
 			Operando();
 			ListArg2();
 		}
@@ -659,7 +658,7 @@ public class AnalisadorSintatico {
 
 	//<Atrib> ::= id ‘=‘ <ExpArit>
 	private void Atrib() {
-		if(token.getClass().equals("ID")) {
+		if(token.getClassToken().equals("ID")) {
 			leToken();
 			if(token.getImage().equals("=")) {
 				leToken();
@@ -682,8 +681,8 @@ public class AnalisadorSintatico {
             	|  
 	 */
 	private void Tipo() {
-		if(token.getClass().equals("PR")) {
-			if(token.getClass().equals("integer"))
+		if(token.getClassToken().equals("PR")) {
+			if(token.getClassToken().equals("integer"))
 				leToken();
 			else if(token.getImage().equals("real"))
 				leToken();
@@ -703,7 +702,7 @@ public class AnalisadorSintatico {
 
 	// <ListParam> ::= <Param><ListParam2> |
 	private void ListParam() {
-		if(token.getClass().equals("ID")) {
+		if(token.getClassToken().equals("ID")) {
 			Param();
 			ListParam2();
 		}
@@ -712,7 +711,7 @@ public class AnalisadorSintatico {
 	//<Param> ::= <Tipo> id
 	private void Param() {
 		Tipo();
-		if(token.getClass().equals("ID")) {
+		if(token.getClassToken().equals("ID")) {
 			leToken();
 		}else {
 			Token lastToken = lastToken();

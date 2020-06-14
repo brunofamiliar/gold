@@ -1,29 +1,33 @@
 fx minhaFuncao: text texto1, real numero1, integer numero2 =>
-	text texto2, real numero3, integer numero4
 	
-	// Isso é apenas um comentário
-	read(texto1)
-
-	when numero3 > numero1 =>
-		numero4 = numero2 + numero3
-	end
-
-	observe numero3 =>
-		equals 4 =>
+		 # Isso é apenas um comentário
+		 read(texto1)
+	
+		when numero3 > numero1 =>
 			numero4 = numero2 + numero3
-		stop
-		base numero4 
-	end
+		end
+	
+		observe numero3 =>
+			equals 4 =>
+				numero4 = numero2 + numero3
+				end
+			stop
+			base numero4 
+		 end
+		 
+	 
+		 if numero4 != numero3 =>
+			numero1 = numero2
+		end
+		or if numero3 < numero2 =>
+			numero2 = numero1
+		end
+		or =>
+			numero3 = numero4
+		end
+		
+		show("Ola" , texto1 )
 
-	if numero4 != numero3 =>
-		numero1 = numero2
-	or if numero3 < numero 2 =>
-		numero2 = numero1
-	or
-		numero3 = numero4
-	end
+back  numero3		
 
-	show("Ola", texto1)
-
-back  numero3
 end (none)
