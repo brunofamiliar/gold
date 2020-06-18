@@ -12,6 +12,7 @@ public class SymbolTable {
 			token.setIndex(symbols.indexOf(simbolFound));
 		else {
 			simbolFound = new Symbol(token.getImage(), scope);
+			symbols.add(simbolFound);
 			token.setIndex(symbols.indexOf(simbolFound));
 		}
 	}
@@ -28,13 +29,13 @@ public class SymbolTable {
 	
 	public static String getType(Token id) {
 		
-		if(id.getClass().equals("ID"))
+		if(id.getClassToken().equals("ID"))
 			return symbols.get(id.getIndex()).getType();
-		else if (id.getClass().equals("CLI"))
+		else if (id.getClassToken().equals("ICL"))
 			return "integer";
-		else if (id.getClass().equals("CLR"))
+		else if (id.getClassToken().equals("RCL"))
 			return "real";
-		else if (id.getClass().equals("CLS"))
+		else if (id.getClassToken().equals("TCL"))
 			return "text";
 		
 		return null;

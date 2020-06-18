@@ -67,7 +67,7 @@ public class AnalisadorSintatico {
 	
 	// <ListDef> ::= <Def><ListDef> |
 	private void ListDef() {
-		if (token.getImage().equals("def")) {
+		if (token.getImage().equals("fx")) {
 			Def();
 			ListDef();
 		}
@@ -298,9 +298,9 @@ public class AnalisadorSintatico {
 				erros.add("Erro: esperado um identificador.e " + lastToken.getLine() + "Coluna: " + lastToken.getColumn());
 			}
 		}else if(token.getClassToken().equals("ID") ||
-				token.getClassToken().equals("CLI") ||
-				token.getClassToken().equals("CLR") ||
-				token.getClassToken().equals("CLT")
+				token.getClassToken().equals("ILC") ||
+				token.getClassToken().equals("RCL") ||
+				token.getClassToken().equals("TCL")
 				) {
 			Operando();
 		}else {
@@ -318,11 +318,11 @@ public class AnalisadorSintatico {
 	private void Operando() {
 		if(token.getClassToken().equals("ID")) {
 			leToken();
-		}else if(token.getClassToken().equals("CLI")) {
+		}else if(token.getClassToken().equals("ILC")) {
 			leToken();
-		}else if(token.getClassToken().equals("CLR")) {
+		}else if(token.getClassToken().equals("RCL")) {
 			leToken();
-		}else if(token.getClassToken().equals("CLT")) {
+		}else if(token.getClassToken().equals("TCL")) {
 			leToken();
 		}
 		
@@ -416,7 +416,7 @@ public class AnalisadorSintatico {
 
 	//<ExpArit2> ::=  | <Op1> <ExpArit>
 	private void ExpArit2() {
-		if(token.getClassToken().equals("OPA")) {
+		if(token.getClassToken().equals("AOP")) {
 			Op1();
 			ExpArit();
 		}
@@ -681,7 +681,7 @@ public class AnalisadorSintatico {
             	|  
 	 */
 	private void Tipo() {
-		if(token.getClassToken().equals("PR")) {
+		if(token.getClassToken().equals("RW")) {
 			if(token.getClassToken().equals("integer"))
 				leToken();
 			else if(token.getImage().equals("real"))
